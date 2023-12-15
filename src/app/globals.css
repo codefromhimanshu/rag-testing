@@ -25,3 +25,27 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(-25%);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
+}

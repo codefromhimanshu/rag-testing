@@ -9,12 +9,25 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "axios": "^1.6.2",
+    "bcryptjs": "^2.4.3",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "langchain": "^0.0.208",
+    "next": "14.0.4",
+    "next-auth": "^4.24.5",
+    "openai": "^4.22.0",
+    "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.0.4"
+    "sequelize": "^6.35.2",
+    "sequelize-cli": "^6.6.2"
   },
   "devDependencies": {
     "typescript": "^5",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
