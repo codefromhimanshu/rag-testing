@@ -16,8 +16,6 @@ import cheerio from "cheerio";
 // 2. Initialize OpenAI and embeddings
 
 
-
-
 export async function POST(request: NextRequest) {
 
     // 4. Handle POST requests
