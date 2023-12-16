@@ -3,13 +3,13 @@ import React from 'react';
 
 import { redirect } from 'next/navigation'
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "../api/auth/[...nextauth]/route"
+import { authOptions } from "../../utils/auth-options"
 
 import ChatInterface from '../../components/Chat';
 import SignOut from '../../components/Logout';
 
 
-const RagPage = async (params) => {
+const RagPage = async () => {
   const session = await getServerSession(authOptions)
   if (!session) {
     redirect('/login')

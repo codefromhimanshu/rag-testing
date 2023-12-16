@@ -1,7 +1,8 @@
-// export const dynamic = 'force-dynamic' // defaults to force-static
+// eslint-disable-next-line 
+// @ts-nocheck
 import { type NextRequest } from 'next/server'
 import { getServerSession } from "next-auth"
-import { authOptions } from "../auth/[...nextauth]/route"
+import { authOptions } from "../../../utils/auth-options"
 import {User} from '../../../models';
 
 
@@ -15,7 +16,7 @@ import cheerio from "cheerio";
 // 2. Initialize OpenAI and embeddings
 
 
-// 3. Start the server
+
 
 export async function POST(request: NextRequest) {
 
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
           numberOfPagesToScan = 4,
           selectedModel = 'gpt-3.5-turbo'
         } = await request.json();
-        console.log(openaiApiKey)
+
         const openai = new OpenAI({
           apiKey: openaiApiKey,
         });
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
         
         console.log("2. Destructured request data");
         // 6. Define rephrase function
-        async function rephraseInput(inputString:string) {
+        const rephraseInput =  async function rephraseInput(inputString:string) {
           console.log("4. Rephrasing input");
           // 7. Rephrase input using OpenAI
           const gptAnswer = await openai.chat.completions.create({
@@ -59,11 +60,11 @@ export async function POST(request: NextRequest) {
               { role: "user", content: inputString },
             ],
           });
-          console.log("Gpt content",gptAnswer.choices[0].message.content)
+        
           return gptAnswer.choices[0].message.content;
         }
         // 8. Define search engine function
-        async function searchEngineForSources(
+        const searchEngineForSources = async function searchEngineForSources(
           message,
           textChunkSize,
           textChunkOverlap

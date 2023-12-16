@@ -5,7 +5,7 @@ interface UserAttributes {
   id: number;
   email: string;
   password: string;
-  name?: string; // This is optional
+  name?: string; 
   role: string;
 }
 
@@ -17,8 +17,8 @@ class User extends Model<UserAttributes, UserCreationAttributes>
   public id!: number;
   public email!: string;
   public password!: string;
-  public name?: string; // Optional
-  public role: string; 
+  public name!: string; 
+  public role!: string; 
 
   // timestamps!
   public readonly createdAt!: Date;

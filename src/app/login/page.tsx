@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { signIn, getCsrfToken, getProviders } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -8,10 +8,8 @@ const LoginPage = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const csrfToken = await getCsrfToken()
-    const providers = await getProviders()
 
-    const result = await signIn('credentials', {
+    const result:any = await signIn('credentials', {
       redirect: false,
       email,
       password,

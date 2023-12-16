@@ -1,10 +1,10 @@
 
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-
+import { type NextRequest } from 'next/server'
 const secret = process.env.SECRET;
 
-export async function middleware(req) {
+export async function middleware(req:NextRequest) {
   // Token will exist if the user is logged in
   const token = await getToken({ req, secret });
 

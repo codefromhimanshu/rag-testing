@@ -33,7 +33,7 @@ const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
-  const handleChange = (event) => {
+  const handleChange = (event:any) => {
     setSelectedModel(event.target.value);
   };
 
