@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
           returnSimilaritySearchResults = true,
           numberOfSimilarityResults = 2,
           numberOfPagesToScan = 4,
+          selectedModel = 'gpt-3.5-turbo'
         } = await request.json();
         console.log(openaiApiKey)
         const openai = new OpenAI({
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
           console.log("4. Rephrasing input");
           // 7. Rephrase input using OpenAI
           const gptAnswer = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
+            model: selectedModel,
             messages: [
               {
                 role: "system",
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
         )}. Based on those, and this query "${message}", respond back with an answer ideally in a sentence or two.`;
         const chatCompletion = await openai.chat.completions.create({
           messages: [{ role: "user", content }],
-          model: "gpt-3.5-turbo",
+          model: selectedModel,
         });
         console.log("10. Sent content to OpenAI for chat completion");
         // 19. Construct the response object

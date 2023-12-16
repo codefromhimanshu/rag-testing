@@ -27,10 +27,15 @@ type SimilaritySearchResult = {
 };
 const ChatInterface: React.FC = () => {
   const [searchText, setSearchText] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo');
   const [openaiApiKey, setOpenaiApiKey] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
+
+  const handleChange = (event) => {
+    setSelectedModel(event.target.value);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,7 +60,8 @@ const ChatInterface: React.FC = () => {
         "returnLLMResults": true,
         "returnSimilaritySearchResults": true,
         "number0fPagesToScan": 2,
-        "numberOfSimilarityResults": 1 
+        "numberOfSimilarityResults": 1,
+        "selectedModel": selectedModel
     });
       setMessages((prevMessages) => [...prevMessages, newMessage, { text: 'Response:',
       isUser: false,
@@ -78,13 +84,13 @@ const ChatInterface: React.FC = () => {
             <div className="inline-block max-w-xs md:max-w-md bg-gray-200 rounded px-4 py-2 shadow">
               {message.text}
               {message.llmResults && message.llmResults.map((llmResult, index) => (
-                <div key={index} className="text-sm mt-2">
-                  <p className="text-gray-700">{llmResult.message.content}</p>
+                <div key={index} className="mt-2 mb-2">
+                  <p className="">{llmResult.message.content}</p>
                 </div>
               ))}
               {message.similaritySearchResults && message.similaritySearchResults.map((resultGroup, groupIndex) => (
                 resultGroup && resultGroup.map((result, resultIndex) => (
-                  <div key={`${groupIndex}-${resultIndex}`} className="mt-1">
+                  <div key={`${groupIndex}-${resultIndex}`} className="mt-1 text-sm text-gray-700">
                     {result.pageContent}
                     <a href={result.metadata.link} target="_blank" rel="noopener noreferrer"
                        className="text-blue-500 hover:text-blue-600 hover:underline">
@@ -104,10 +110,24 @@ const ChatInterface: React.FC = () => {
           type="text"
           value={openaiApiKey}
           onChange={(e) => setOpenaiApiKey(e.target.value)}
-          className="flex-auto w-14 p-2 border border-gray-300 rounded w-[50px]"
+          className="flex-auto w-8 p-2 border border-gray-300 rounded w-[50px]"
           placeholder="your open api key... we won't be saving it"
           disabled={loading}
         />
+        <div className="w-64 max-w-xs mx-auto">
+          <label htmlFor="dropdown" className="block text-sm font-medium text-gray-700">Choose an option:</label>
+          <select
+            id="dropdown"
+            value={selectedModel}
+            onChange={handleChange}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none border-indigo-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          >
+            <option value="">Select an option</option>
+            <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+            <option value="gpt-4">gpt-4</option>
+            <option value="gpt-4-1106-preview">gpt-4-1106-preview</option>
+          </select>
+        </div>
         <input
           type="text"
           value={searchText}

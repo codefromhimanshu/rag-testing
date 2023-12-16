@@ -11,18 +11,29 @@ const dbConfig = {
   username: process.env.DB_USER || 'username',
   password: process.env.DB_PASS || 'password',
   host: process.env.DB_HOST || 'localhost',
-  dialect: 'postgres' as Dialect,
+  dialect: process.env.DB_DIALECT as Dialect,
+  storage:  process.env.DB_STORAGE_PATH
 };
 
+let configJson =  {};
+if (dbConfig.dialect == 'sqlite'){
+  configJson = {
+    dialect: dbConfig.dialect,
+    storage: dbConfig.storage
+  }
+} else {
+  configJson = {
+    host: dbConfig.host,
+    dialectModule: pg,
+    dialect: dbConfig.dialect,
+
+  }
+}
 const sequelize = new Sequelize(
   dbConfig.database,
   dbConfig.username,
   dbConfig.password,
-  {
-    host: dbConfig.host,
-    dialectModule: pg,
-    dialect: dbConfig.dialect,
-  }
+  configJson
 );
 
 
