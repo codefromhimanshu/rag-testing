@@ -17,7 +17,9 @@
 }
 
 body {
+  overflow-y: hidden;
   color: rgb(var(--foreground-rgb));
+  color: '#000000';
   background: linear-gradient(
       to bottom,
       transparent,
