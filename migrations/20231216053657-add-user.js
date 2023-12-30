@@ -33,6 +33,12 @@ module.exports = {
         defaultValue: "user",
         allowNull: true,
       },
+      is_email_confirmed: {
+        type: Sequelize.BOOLEAN,
+        limit: 128,
+        defaultValue: false,
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

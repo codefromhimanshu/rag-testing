@@ -7,6 +7,7 @@ interface UserAttributes {
   password: string;
   name?: string; 
   role: string;
+  isEmailConfirmed: boolean;
 }
 
 // Some fields are optional when creating a User
@@ -19,6 +20,8 @@ class User extends Model<UserAttributes, UserCreationAttributes>
   public password!: string;
   public name!: string; 
   public role!: string; 
+  public isEmailConfirmed!: boolean; 
+  
 
   // timestamps!
   public readonly createdAt!: Date;
@@ -41,6 +44,12 @@ export default function (sequelize: Sequelize): typeof User {
       password: {
         type: new DataTypes.STRING(128),
         allowNull: false,
+      },
+      isEmailConfirmed: {
+        type: new DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+        field: 'is_email_confirmed'
       },
       name: {
         type: new DataTypes.STRING(128),

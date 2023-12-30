@@ -21,7 +21,7 @@ const authOptions: NextAuthOptions = {
           return null;
         }
         const user = await User.findOne({
-          where: { email: credentials.email },
+          where: { email: credentials.email, isEmailConfirmed: true },
         });
 
         if (user && bcrypt.compareSync(credentials.password, user.password)) {

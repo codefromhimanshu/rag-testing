@@ -12,7 +12,7 @@ export async function middleware(req:NextRequest) {
   // Allow the requests if the following is true...
   // 1) It's a request for next-auth session & provider fetching
   // 2) The token exists
-  if (pathname.includes('/api/auth') || pathname.includes('/api/register') || token) {
+  if (pathname.includes('/api/auth') || pathname.includes('/api/register') || pathname.includes('/email/confirmation') || token) {
     return NextResponse.next();
   }
 
