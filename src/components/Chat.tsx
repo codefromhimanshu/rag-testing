@@ -36,7 +36,7 @@ const ChatInterface: React.FC = () => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const onMessage = useCallback(
-    (event: MessageEvent<Blob>) => {
+    (event: MessageEvent<string>) => {
       try{
         const response = JSON.parse(event.data);
 
