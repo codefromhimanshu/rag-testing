@@ -1,13 +1,14 @@
 "use client";
-import React, { useState, FormEvent, useRef, useEffect } from 'react';
+import React, { useState, FormEvent, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import LoadingDots from './LoadingDots';
-
+import { useWebSocket } from 'next-ws/client';
 type Message = {
   text: string;
+  rephrasedMessage?: string;
   isUser: boolean;
   llmResults?: LLMResult[];
-  similaritySearchResults?: SimilaritySearchResult[][];
+  similaritySearchResults?: SimilaritySearchResult[];
 };
 
 type LLMResult = {
@@ -26,32 +27,109 @@ type SimilaritySearchResult = {
   };
 };
 const ChatInterface: React.FC = () => {
+  const ws = useWebSocket();
   const [searchText, setSearchText] = useState<string>('');
-  const [selectedModel, setSelectedModel] = useState('mistralai/mixtral-8x7b-instruct');
+  const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo');
   const [openaiApiKey, setOpenaiApiKey] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const messagesEndRef = useRef<null | HTMLDivElement>(null);
+
+  const onMessage = useCallback(
+    (event: MessageEvent<Blob>) => {
+      try{
+        const response = JSON.parse(event.data);
+
+        if(response.type=='ragResponse') {  
+          setMessages(prevMessages => {
+            let lastMessageIndex = -1;
+            if(prevMessages.length > 0 && prevMessages[prevMessages.length-1].isUser===false) {
+              lastMessageIndex = prevMessages.length-1;
+            }
+            if (lastMessageIndex >0) {
+              return prevMessages.map((msg, index) => {
+                if(index === lastMessageIndex) {
+           
+                  if(response.subType == 'similaritySearchPartialResults' && msg.similaritySearchResults) {
+                    const existingArray = msg.similaritySearchResults[response.resultIndex];
+                    if(existingArray) {
+                      return {...msg, ...response, similaritySearchResults: [
+                        ...msg.similaritySearchResults.slice(0, response.resultIndex),
+                        {...msg.similaritySearchResults[response.resultIndex], pageContent: msg.similaritySearchResults[response.resultIndex].pageContent + response.chunk, metadata: response.metadata  }, 
+                        ...msg.similaritySearchResults.slice(response.resultIndex+1)
+                      ]};
+                    } else {
+                      return {...msg, ...response, similaritySearchResults: [
+                        ...[{pageContent:''},{pageContent:''},{pageContent:''},{pageContent:''}].slice(0, response.resultIndex),
+                        {...msg.similaritySearchResults[response.resultIndex], pageContent: msg.similaritySearchResults[response.resultIndex].pageContent + response.chunk,  metadata: response.metadata }, 
+                        ...[{pageContent:''},{pageContent:''},{pageContent:''},{pageContent:''}].slice(response.resultIndex+1)
+                      ]};
+                    }
+                  } else if (response.subType == 'similaritySearchPartialResults'){
+                    return {...msg, ...response, similaritySearchResults: [
+                      ...[{pageContent:''},{pageContent:''},{pageContent:''},{pageContent:''}].slice(0, response.resultIndex),
+                      {pageContent:response.chunk, metadata: response.metadata }, 
+                      ...[{pageContent:''},{pageContent:''},{pageContent:''},{pageContent:''}].slice(response.resultIndex+1)
+                    ], }
+                  } else if (response.subType == 'similaritySearchResults'){
+                    // return {...msg, ...response, similaritySearchResults: [...msg.similaritySearchResults, ...response.similaritySearchResults], }
+                  } else if (response.subType == 'rephrasedMessage'){
+                    return {...msg, ...response, rephrasedMessage: msg.rephrasedMessage + response.rephrasedMessage }
+                  } else {
+                    return {...msg, ...response}
+                  }
+                } else {
+                  return msg
+                }
+              });
+            } 
+            return [...prevMessages, { isUser: false, ...response }];
+          });
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    [],
+  );
+  
+  useEffect(() => {
+    ws?.addEventListener('message', onMessage);
+    return () => ws?.removeEventListener('message', onMessage);
+  }, [onMessage, ws]);
+
   const modelList = [
     "gpt-3.5-turbo",
+    "gpt-4",
+    // "openrouter/auto",
+    // "nousresearch/nous-capybara-7b",
+    // "mistralai/mistral-7b-instruct",
+    // "huggingfaceh4/zephyr-7b-beta",
+    // "openchat/openchat-7b",
+    // "gryphe/mythomist-7b",
+    // "openrouter/cinematika-7b",
+    // "cognitivecomputations/dolphin-mixtral-8x7b",
+    // "meta-llama/codellama-34b-instruct",
+    // "phind/phind-codellama-34b",
+    // "haotian-liu/llava-13b",
+    // "meta-llama/llama-2-13b-chat",
+    // "perplexity/pplx-7b-chat",
+    // "meta-llama/llama-2-70b-chat",
+    // "nousresearch/nous-hermes-llama2-70b",
+    // "togethercomputer/stripedhyena-nous-7b",
+    // "google/palm-2-chat-bison",
+    // "anthropic/claude-2",
+    // "anthropic/claude-2.0",
     // "gpt-3.5-turbo-1106",
     // "gpt-3.5-turbo-0301",
     // "gpt-3.5-turbo-16k",
     // "gpt-4-1106-preview",
-    "gpt-4",
     // "gpt-4-0314",
     // "gpt-4-32k",
     // "gpt-4-32k-0314",
     // "gpt-4-vision-preview",
     // "text-davinci-002",
     // "gpt-3.5-turbo-instruct",
-
-    "openrouter/auto",
-    "nousresearch/nous-capybara-7b",
-    "mistralai/mistral-7b-instruct",
-    "huggingfaceh4/zephyr-7b-beta",
-    "openchat/openchat-7b",
-    "gryphe/mythomist-7b",
-    "openrouter/cinematika-7b",
-    "cognitivecomputations/dolphin-mixtral-8x7b",
     // "intel/neural-chat-7b",
     // "mistralai/mixtral-8x7b-instruct",
     // "nousresearch/nous-hermes-2-vision-7b",
@@ -65,16 +143,9 @@ const ChatInterface: React.FC = () => {
     // "jebcarter/psyfighter-13b",
     // "koboldai/psyfighter-13b-2",
     // "nousresearch/nous-hermes-llama2-13b",
-    "meta-llama/codellama-34b-instruct",
-    "phind/phind-codellama-34b",
-    "haotian-liu/llava-13b",
-    "meta-llama/llama-2-13b-chat",
     // "perplexity/pplx-70b-online",
     // "perplexity/pplx-7b-online",
-    "perplexity/pplx-7b-chat",
     // "perplexity/pplx-70b-chat",
-    "meta-llama/llama-2-70b-chat",
-    "nousresearch/nous-hermes-llama2-70b",
     // "nousresearch/nous-capybara-34b",
     // "jondurbin/airoboros-l2-70b",
     // "migtissera/synthia-70b",
@@ -88,18 +159,14 @@ const ChatInterface: React.FC = () => {
     // "01-ai/yi-34b-chat",
     // "01-ai/yi-34b",
     // "01-ai/yi-6b",
-    "togethercomputer/stripedhyena-nous-7b",
     // "togethercomputer/stripedhyena-hessian-7b",
     // "mancer/weaver",
     // "gryphe/mythomax-l2-13b",
-    "google/palm-2-chat-bison",
     // "google/palm-2-codechat-bison",
     // "google/palm-2-chat-bison-32k",
     // "google/palm-2-codechat-bison-32k",
     // "google/gemini-pro",
     // "google/gemini-pro-vision",
-    "anthropic/claude-2",
-    "anthropic/claude-2.0",
     // "anthropic/claude-instant-v1",
     // "anthropic/claude-v1",
     // "anthropic/claude-1.2",
@@ -107,8 +174,6 @@ const ChatInterface: React.FC = () => {
     // "anthropic/claude-v1-100k",
     // "anthropic/claude-instant-1.0"
     ]
-  const [messages, setMessages] = useState<Message[]>([]);
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   const handleChange = (event:any) => {
     setSelectedModel(event.target.value);
@@ -123,59 +188,84 @@ const ChatInterface: React.FC = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     if (searchText.trim() === '') return;
+    ws?.send(JSON.stringify({  
+      "type": "chat", 
+      "message": searchText,
+      openaiApiKey: openaiApiKey,
+      "textChunkSize": 300,
+      "textChunkOverlap": 20,
+      "returnLLMResults": true,
+      "returnSimilaritySearchResults": true,
+      "number0fPagesToScan": 2,
+      "numberOfSimilarityResults": 1,
+      "selectedModel": selectedModel
+  }))
+  
 
     const newMessage: Message = { text: searchText, isUser: true };
     setMessages((prevMessages) => [...prevMessages, newMessage]);
-    setLoading(true);
+    // setLoading(true);
 
-    try {
-      const response = await axios.post('/api/rag', {   
-        "message": searchText,
-        openaiApiKey: openaiApiKey,
-        "textChunkSize": 300,
-        "textChunkOverlap": 20,
-        "returnLLMResults": true,
-        "returnSimilaritySearchResults": true,
-        "number0fPagesToScan": 2,
-        "numberOfSimilarityResults": 1,
-        "selectedModel": selectedModel
-    });
-      setMessages((prevMessages) => [...prevMessages, newMessage, { text: 'Response:',
-      isUser: false,
-      llmResults: response.data.llmResults,
-      similaritySearchResults: response.data.similaritySearchResults }]);
-    } catch (error) {
-      setMessages((prevMessages) => [...prevMessages, newMessage, { text: 'Error: Could not fetch response.', isUser: false }]);
-    } finally {
-      setLoading(false);
-    }
+    // try {
+    //   const response = await axios.post('/api/rag', {   
+    //     "message": searchText,
+    //     openaiApiKey: openaiApiKey,
+    //     "textChunkSize": 300,
+    //     "textChunkOverlap": 20,
+    //     "returnLLMResults": true,
+    //     "returnSimilaritySearchResults": true,
+    //     "number0fPagesToScan": 2,
+    //     "numberOfSimilarityResults": 1,
+    //     "selectedModel": selectedModel
+    // });
+      // setMessages((prevMessages) => [...prevMessages, newMessage, { text: 'Response:',
+      //   isUser: false,
+      //   llmResults: response.data.llmResults,
+      //   similaritySearchResults: response.data.similaritySearchResults }]);
+      // } catch (error) {
+      //   setMessages((prevMessages) => [...prevMessages, newMessage, { text: 'Error: Could not fetch response.', isUser: false }]);
+      // } finally {
+      //   setLoading(false);
+      // }
 
-    setSearchText('');
+    // setSearchText('');
   };
 
   return (
     <div className="flex flex-col h-screen">
       <div className="overflow-auto p-4 flex-grow mb-24">
+
       {messages.map((message, index) => (
           <div key={index} className={`my-2 p-2 ${message.isUser ? 'text-right' : 'text-left'}`}>
             <div className="inline-block max-w-xs md:max-w-md bg-gray-200 rounded px-4 py-2 shadow">
               {message.text}
+              {message.rephrasedMessage}
               {message.llmResults && message.llmResults.map((llmResult, index) => (
                 <div key={index} className="mt-2 mb-2">
                   <p className="">{llmResult.message.content}</p>
                 </div>
               ))}
-              {message.similaritySearchResults && message.similaritySearchResults.map((resultGroup, groupIndex) => (
-                resultGroup && resultGroup.map((result, resultIndex) => (
-                  <div key={`${groupIndex}-${resultIndex}`} className="mt-1 text-sm text-gray-700">
+              {message.similaritySearchResults && message.similaritySearchResults.map((result, resultIndex) => (
+          
+                  <div key={`${resultIndex}`} className="mt-1 text-sm text-gray-700">
                     {/* {result.pageContent} */}
-                    <div className="content" dangerouslySetInnerHTML={{__html: result.pageContent}}></div>
-                    <a href={result.metadata.link} target="_blank" rel="noopener noreferrer"
-                       className="text-blue-500 hover:text-blue-600 hover:underline">
-                      [more here]
-                    </a>
+                    {result.pageContent && (
+                      <>
+                        <div className="content" dangerouslySetInnerHTML={{__html: result.pageContent}}></div>
+                        {
+                          result.metadata?.link && (
+                            <a href={result.metadata?.link} target="_blank" rel="noopener noreferrer"
+                                className="text-blue-500 hover:text-blue-600 hover:underline">
+                              [more here]
+                            </a>
+                          )
+                        }
+                      
+                      </>
+                    )}
+                  
                   </div>
-                ))
+
               ))}
             </div>
           </div>
@@ -211,8 +301,6 @@ const ChatInterface: React.FC = () => {
                 <option key={model} value={model}>{model}</option>
               ))
             }
-      
-            
           </select>
         </div>
         <input

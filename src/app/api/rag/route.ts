@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
             console.log(pageContent)
             const domain = getDomainFromUrl(item.link)
             pageContent = addDomainToImgSrc(pageContent, domain)
-            getDomainFromUrl
+            
             return [{
                 pageContent: pageContent,
                 metadata: {

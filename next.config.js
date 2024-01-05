@@ -1,4 +1,7 @@
 /** @type {import('next').NextConfig} */
+
+require("next-ws/server").verifyPatch();
+
 const nextConfig = {
   pageExtensions: ["mdx", "md", "jsx", "js", "tsx", "ts"],
   experimental: {
